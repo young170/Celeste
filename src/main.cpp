@@ -1,3 +1,4 @@
+#include "celeste_lib.h"
 
 static bool running = true;
 
@@ -15,12 +16,37 @@ void platform_update_window();
 static HWND window;
 
 
+// callback function that processes messages sent to a window
+LRESULT CALLBACK windows_window_callback(HWND window, UINT msg,
+                                          WPARAM wParam, LPARAM lParam)
+{
+  LRESULT result = 0;
+
+  switch (msg)
+  {
+    case WM_CLOSE:
+    {
+      running = false;
+      break;
+    }
+    
+    default:
+    {
+      // default input
+      result = DefWindowProcA(window, msg, wParam, lParam);
+    }
+  }
+
+  return result;
+}
+
 bool platform_create_window(int width, int height, char *title)
 {
   HINSTANCE hInstance = GetModuleHandleA(0); // handler
 
   WNDCLASSA wcA = {};
-  wcA.lpfnWndProc = DefWindowProcA; // callback function that processes meesages sent to a window: default window procedure
+  // use DefWindowProcA for default window procdure message-callback function
+  wcA.lpfnWndProc = windows_window_callback;
   wcA.hInstance = hInstance;
   wcA.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
   wcA.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -97,6 +123,9 @@ int main()
   while (running)
   {
     platform_update_window();
+
+    SM_TRACE("Test");
+    SM_ASSERT(false, "assert");
   }
 
   return 0;

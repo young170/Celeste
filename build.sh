@@ -1,6 +1,6 @@
 #!/bin/bash
 
 libs=-luser32
-warnings=-Wno-writable-strings # disables c++11 string vs char* warning
+warnings=-Wno-writable-strings # disables c++11 string vs char* wr
 
-clang src/main.cpp -o celeste.exe $libs $warnings
+clang -g src/main.cpp -o celeste.exe $libs $warnings
