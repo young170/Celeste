@@ -1,0 +1,7 @@
+[
+  {
+    "timestamp": "2025-01-07T07:32:52.847Z",
+    "text": "#include \"gl_renderer.h\"\r\n\r\n\r\n// OpenGL Structs\r\nstruct GLContext\r\n{\r\n  GLuint programID;\r\n};\r\n\r\n// OpenGL Globals\r\nstatic GLContext glContext;\r\n\r\n// OpenGL Functions\r\nstatic void APIENTRY gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,\r\n                                         GLsizei length, const GLchar* message, const void* user)\r\n{\r\n  if(severity == GL_DEBUG_SEVERITY_LOW || \r\n     severity == GL_DEBUG_SEVERITY_MEDIUM ||\r\n     severity == GL_DEBUG_SEVERITY_HIGH)\r\n  {\r\n    SM_ASSERT(false, \"OpenGL Error: %s\", message);\r\n  }\r\n  else\r\n  {\r\n    SM_TRACE((char*)message);\r\n  }\r\n}\r\n\r\nbool gl_init(BumpAllocator *transientStorage)\r\n{\r\n  load_gl_functions();\r\n\r\n  glDebugMessageCallback(&gl_debug_callback, nullptr); // OpenGL debug callback\r\n  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);\r\n  glEnable(GL_DEBUG_OUTPUT);\r\n\r\n  GLuint vertShaderID = glCreateShader(GL_VERTEX_SHADER);\r\n  GLuint fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);\r\n\r\n  \r\n  \r\n  return true;\r\n}",
+    "language": "cpp"
+  }
+]
