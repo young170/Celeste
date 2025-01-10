@@ -3,6 +3,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "render_interface.h"
+
 
 // OpenGL Constants
 const char *TEXTURE_PATH = "assets/textures/TEXTURE_ATLAS.png";
@@ -12,6 +14,8 @@ struct GLContext
 {
   GLuint programID;
   GLuint textureID;
+  GLuint transformSBOID;
+  GLuint screenSizeID;
 };
 
 // OpenGL Globals
@@ -125,25 +129,58 @@ bool gl_init(BumpAllocator *transientStorage)
     stbi_image_free(data);
   }
 
-  glEnable(GL_FRAMEBUFFER_SRGB); // our texture is in the SRGB color space
-  glDisable(0x8090D);
+  // transform storage buffer
+  {
+    glGenBuffers(1, &glContext.transformSBOID);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, glContext.transformSBOID);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Transform) * MAX_TRANSFORMS,
+                  renderData->transforms, GL_DYNAMIC_DRAW);
+  }
 
+  // uniforms
+  // screenSize corresponds to screenSize in shader
+  {
+    glContext.screenSizeID = glGetUniformLocation(glContext.programID, "screenSize");
+  }
+ 
+  glEnable(GL_FRAMEBUFFER_SRGB); // our texture is in the SRGB color space
+  glDisable(GL_MULTISAMPLE);
+ 
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_GREATER);
-
+ 
   // use program
   glUseProgram(glContext.programID);
   
   return true;
 }
-
+ 
 void gl_render()
 {
   glClearColor(119.0f / 255.0f, 33.0f / 255.0f, 111.0f / 255.0f, 1.0f);
   glClearDepth(0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear
-  glViewport(0, 0, input.screenSizeX, input.screenSizeY);
+  glViewport(0, 0, input->screenSizeX, input->screenSizeY);
 
+  // copy screen size to the GPU
+  {
+    Vec2 screenSize = {(float)input->screenSizeX, (float)input->screenSizeY};
+    glUniform2fv(glContext.screenSizeID, 1, &screenSize.x);
+  }
+
+  // opaque objects
+  {
+    // copy transforms to the GPU
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Transform) * renderData->transformCount,
+                      renderData->transforms);
+
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderData->transformCount);
+
+    // reset for next frame
+    renderData->transformCount = 0;
+  }
+ 
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
-
+ 
+ 
